@@ -29,6 +29,10 @@ public class Camera : MonoBehaviour
         {
             offset_pos = new Vector3(look_at.transform.position.x - offset, look_at.transform.position.y, -10);
         }
+        else if (player_move == 0)
+        {
+            offset_pos = new Vector3(look_at.transform.position.x, look_at.transform.position.y, -10);
+        }
 
         transform.position = Vector3.Lerp(transform.position, offset_pos, smoothing * Time.deltaTime);
     }

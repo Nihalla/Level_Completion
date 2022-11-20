@@ -10,8 +10,6 @@ public class Player_Movement : MonoBehaviour
     CharacterController controller;
     public Vector2 movement_input;
     [SerializeField] private float movement_speed = 20.0f;
-    [SerializeField] private GameObject held_item;
-
     public int number_jumps = 1;
     [SerializeField] private float jump_force = 2.0f;
     [SerializeField] private float jump_velocity = 0.0f;
@@ -22,6 +20,8 @@ public class Player_Movement : MonoBehaviour
     private float additional_decay = 0.0f;
     [SerializeField] private float decay_multiplier = 0.2f;
     private GameObject[] doors;
+    private GameObject[] portals;
+    [SerializeField] private List<GameObject> held_items = new();
 
 
     // Start is called before the first frame update
@@ -30,6 +30,7 @@ public class Player_Movement : MonoBehaviour
         controls = new PlayerControl();
         controller = GetComponent<CharacterController>();
         doors = GameObject.FindGameObjectsWithTag("Door");
+        portals = GameObject.FindGameObjectsWithTag("Portal");
         controls.Player.Move.performed += ctx => movement_input = ctx.ReadValue<Vector2>();
         controls.Player.Move.canceled += ctx => movement_input = Vector2.zero;
         controls.Player.Jump.performed += ctx => Jump();
@@ -100,26 +101,47 @@ public class Player_Movement : MonoBehaviour
         float closest_dist = 999f;
         foreach( GameObject door in doors)
         {
-            //Debug.Log("Looking for closest door...");
-            if(Vector2.Distance(transform.position, door.transform.position) < closest_dist)
-            {
-                closest_dist = Vector2.Distance(transform.position, door.transform.position);
-                closest_door = door;
+            if (door != null)
+            {//Debug.Log("Looking for closest door...");
+                if (Vector2.Distance(transform.position, door.transform.position) < closest_dist)
+                {
+                    closest_dist = Vector2.Distance(transform.position, door.transform.position);
+                    closest_door = door;
+                }
             }
         }
         //Debug.Log("Closest door - " + closest_door);
-        if (closest_door != null && held_item != null)
+        if (closest_door != null && held_items != null)
         {
             //Debug.Log("has closest door and held item");
             if (Vector2.Distance(transform.position, closest_door.transform.position) < 2f)
             {
-                //Debug.Log("In range, checking key");
-                if (closest_door.GetComponent<Door_logic>().CheckKey(held_item))
+                foreach (GameObject held_key in held_items)
                 {
-                    //Debug.Log("Correct key");
-                    Destroy(closest_door);
-                    Destroy(held_item);
+                    if (held_items != null)
+                    {//Debug.Log("In range, checking key");
+                        if (closest_door.GetComponent<Door_logic>().CheckKey(held_key))
+                        {
+                            //Debug.Log("Correct key");
+                            held_items.Remove(held_key);
+                            Destroy(closest_door);
+                            Destroy(held_key);
+                            break;
+                        }
+                    }
                 }
+               
+            }
+        }
+
+        foreach(GameObject portal in portals)
+        {
+            //Debug.Log("Looking for all portals...");
+            if (portal.GetComponent<Portal_behavoiur>().IsActive())
+            {
+                //Debug.Log("found active portal");
+                portal.GetComponent<Portal_behavoiur>().Teleport();
+                break;
             }
         }
 
@@ -127,9 +149,7 @@ public class Player_Movement : MonoBehaviour
 
     public void Hold(GameObject key)
     {
-
-        held_item.SetActive(true);
-        held_item = key;
+        held_items.Add(key);
     }
 
     private void OnEnable()
