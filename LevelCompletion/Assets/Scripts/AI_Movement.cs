@@ -25,27 +25,42 @@ public class AI_Movement : MonoBehaviour
     void FixedUpdate()
     {
         NavMeshPath path = new NavMeshPath();
-        
-        
-        if (agent.CalculatePath(destination_list[0].transform.position, path) && path.status == NavMeshPathStatus.PathComplete)
+        current_destination = destination_list[0];
+        if (current_destination.tag == "Door")
         {
-            gameObject.transform.GetChild(0).gameObject.GetComponent<MeshRenderer>().material = can_move;
-            //Debug.Log("Can reach");
             agent.SetDestination(destination_list[0].transform.position);
         }
         else
         {
-            gameObject.transform.GetChild(0).gameObject.GetComponent<MeshRenderer>().material = error;
-            //Debug.Log("Can't reach?");
+            if (agent.CalculatePath(destination_list[0].transform.position, path) && path.status == NavMeshPathStatus.PathComplete)
+            {
+                gameObject.transform.GetChild(0).gameObject.GetComponent<MeshRenderer>().material = can_move;
+                //Debug.Log("Can reach");
+                agent.SetDestination(destination_list[0].transform.position);
+            }
+            else
+            {
+                if(current_destination != final_destination)
+                {
+                    RemoveDestination(current_destination);
+                    current_destination = destination_list[0];
+                    if (current_destination.tag == "Door")
+                    {
+                        Debug.Log("can't reach key, looking for alternatives");
+                        current_destination.GetComponent<Door_logic>().KeyFailed();
+                    }
+                }
+                gameObject.transform.GetChild(0).gameObject.GetComponent<MeshRenderer>().material = error;
+                //Debug.Log("Can't reach?");
+            }
         }
-        //agent.SetDestination(destination_list[0].transform.position);
 
     }
 
-    public void AddDestination(GameObject new_dest)
+    public void AddDestination(GameObject new_dest, int priority)
     {
-        Debug.Log("Key located, movign to key");
-        destination_list.Insert(0, new_dest);
+        Debug.Log("New Destination located, movign to " + new_dest.name);
+        destination_list.Insert(priority, new_dest);
     }
 
     public void RemoveDestination(GameObject to_remove)

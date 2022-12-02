@@ -4,6 +4,7 @@ using UnityEngine;
 
 public class Key_behaviour : MonoBehaviour
 {
+    public bool monster_drop;
    
     private void OnTriggerEnter(Collider player)
     {
