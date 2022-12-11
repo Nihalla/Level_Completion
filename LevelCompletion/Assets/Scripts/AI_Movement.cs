@@ -11,7 +11,11 @@ public class AI_Movement : MonoBehaviour
     public List<GameObject> destination_list = new();
     public GameObject current_destination;
     public List<GameObject> held_items = new();
-    private bool is_stuck = false;
+    public bool is_stuck = false;
+    public bool in_loop = false;
+    public bool out_of_reach = false;
+    public bool inaccessible = false;
+    public bool no_key = false;
     private float stuck_timer = 2f;
     private Vector2 previous_pos;
     private Vector2 current_pos;
@@ -59,25 +63,54 @@ public class AI_Movement : MonoBehaviour
             {
                 if(current_destination != final_destination)
                 {
-                    RemoveDestination(current_destination);
-                    current_destination = destination_list[0];
-                    if (current_destination.tag == "Door")
+                    
+                    if (destination_list[1].tag == "Door")
                     {
+                        RemoveDestination(current_destination);
+                        current_destination = destination_list[0];
                         Debug.Log("can't reach key, looking for alternatives");
                         current_destination.GetComponent<Door_logic>().KeyFailed();
                     }
                 }
                 gameObject.transform.GetChild(0).gameObject.GetComponent<MeshRenderer>().material = error;
-                //Debug.Log("Can't reach?");
+                Debug.Log("Can't reach?");
+                out_of_reach = true;
             }
         }
+
         current_pos = new Vector2(transform.position.x, transform.position.y);
-        if (Vector2.Distance(previous_pos, current_pos) < 0.01)
+
+        if (Vector2.Distance(previous_pos, current_pos) < 0.05)
         {
             stuck_timer -= Time.deltaTime;
             if (stuck_timer <= 0)
             {
-                is_stuck = true; 
+                if (current_destination != final_destination)
+                {
+                    if (destination_list[1].tag == "Door" && !no_key)
+                    {
+                        RemoveDestination(current_destination);
+                        destination_list[0].GetComponent<Door_logic>().KeyFailed();
+                        stuck_timer = 2f;
+                    }
+                    else if (destination_list[0] == destination_list[1] && !no_key && !inaccessible)
+                    {
+                        RemoveDestination(current_destination);
+                        current_destination = destination_list[0];
+                        RemoveDestination(current_destination);
+                        if (destination_list[0].tag == "Door")
+                        {
+                            destination_list[0].GetComponent<Door_logic>().KeyFailed();
+                            stuck_timer = 2f;
+                        }
+                    }
+                    else
+                    { is_stuck = true; }
+                }
+                else
+                {
+                    is_stuck = true;
+                }
             }
         }
         else
@@ -94,10 +127,11 @@ public class AI_Movement : MonoBehaviour
             if (destination == current_destination)
             {
                 list_pos++;
-                if (list_pos > 1)
+                if (list_pos > 1 && !inaccessible)
                 {
                     //Debug.Log("Hi I am destination - " + destination.name + " and I am already on the list!");
                     is_stuck = true;
+                    in_loop = true;
                 }
             }
             /*if (destination_list.IndexOf(destination) != 0)
@@ -128,17 +162,25 @@ public class AI_Movement : MonoBehaviour
         else
         {
             gameObject.transform.GetChild(0).gameObject.GetComponent<MeshRenderer>().material = can_move;
+            in_loop = false;
+            out_of_reach = false;
+            no_key = false;
+            inaccessible = false;
         }
     }
 
     public void AddDestination(GameObject new_dest, int priority)
     {
-        //Debug.Log("New Destination located, movign to " + new_dest.name);
-        destination_list.Insert(priority, new_dest);
+       
+        if (!in_loop)
+        {
+            Debug.Log("New Destination located, movign to " + new_dest.name);
+            destination_list.Insert(priority, new_dest); }
     }
 
     public void RemoveDestination(GameObject to_remove)
     {
+        Debug.Log("Removing destination - " + to_remove);
         if (destination_list.Contains(to_remove))
         {
             destination_list.Remove(to_remove);

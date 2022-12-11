@@ -55,7 +55,7 @@ public class Door_logic : MonoBehaviour
                 //open = true;
                 return true;
             }
-            
+
         }
         return false;
     }
@@ -92,14 +92,14 @@ public class Door_logic : MonoBehaviour
                         //Debug.Log("Key not dropped by monster");
                         if (required_key.Count == 1)
                         {
-                            //Debug.Log("unlockable by only one key");
+                            Debug.Log("unlockable by only one key");
                             player.GetComponent<AI_Movement>().AddDestination(required_key[0], 0);
                             gave_dest = true;
                             //break;
                         }
                         else if (required_key.Count > 1)
                         {
-                            //Debug.Log("unlockable by multiple keys");
+                            Debug.Log("unlockable by multiple keys");
                             player.GetComponent<AI_Movement>().AddDestination(required_key[keys_failed], 0);
                             player.GetComponent<AI_Movement>().AddDestination(gameObject, 1);
                             gave_dest = true;
@@ -116,25 +116,52 @@ public class Door_logic : MonoBehaviour
     {
         if (other.gameObject == player)
         {
-            foreach (GameObject item in player.GetComponent<AI_Movement>().held_items)
+
+
+            if (required_key.Count > 0)
             {
-                if (item != null)
+                if (required_key.Count == 1)
                 {
-                    if (CheckKey(item))
+                    foreach (GameObject key in required_key)
                     {
-                        player.GetComponent<AI_Movement>().held_items.Remove(item);
-                        Destroy(item);
-                        unlocked = true;
-                        if (player.GetComponent<AI_Movement>().current_destination == gameObject)
+                        if (key != null)
                         {
-                            player.GetComponent<AI_Movement>().RemoveDestination(gameObject);
+                            if (player.GetComponent<AI_Movement>().current_destination == key)
+                            {
+                                player.GetComponent<AI_Movement>().inaccessible = true;
+                            }
                         }
-                        Destroy(gameObject);
-                        break;
+                        else
+                        {
+                            player.GetComponent<AI_Movement>().no_key = true;
+                        }
                     }
                 }
+                foreach (GameObject item in player.GetComponent<AI_Movement>().held_items)
+                {
+                    if (item != null)
+                    {
+                        if (CheckKey(item))
+                        {
+                            player.GetComponent<AI_Movement>().held_items.Remove(item);
+                            Destroy(item);
+                            unlocked = true;
+                            if (player.GetComponent<AI_Movement>().current_destination == gameObject)
+                            {
+                                player.GetComponent<AI_Movement>().RemoveDestination(gameObject);
+                            }
+                            Destroy(gameObject);
+                            break;
+                        }
+                    }
+                }
+                ResolveDoor(keys_failed);
             }
-            ResolveDoor(keys_failed);
+
+            else
+            {
+                player.GetComponent<AI_Movement>().no_key = true;
+            }
         }
     }
 
