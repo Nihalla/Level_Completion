@@ -60,7 +60,7 @@ public class Door_logic : MonoBehaviour
         return false;
     }
 
-    private void ResolveDoor(int key_to_check)
+    public void ResolveDoor(int key_to_check)
     {
         
         if (!unlocked)
@@ -116,8 +116,6 @@ public class Door_logic : MonoBehaviour
     {
         if (other.gameObject == player)
         {
-
-
             if (required_key.Count > 0)
             {
                 if (required_key.Count == 1)
@@ -157,9 +155,9 @@ public class Door_logic : MonoBehaviour
                 }
                 ResolveDoor(keys_failed);
             }
-
             else
             {
+                Debug.Log("Door has no valid key");
                 player.GetComponent<AI_Movement>().no_key = true;
             }
         }

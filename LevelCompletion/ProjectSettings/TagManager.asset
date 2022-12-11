@@ -9,6 +9,7 @@ TagManager:
   - Portal
   - Enemy
   - Enemy_Manager
+  - Floor_Tile
   layers:
   - Default
   - TransparentFX

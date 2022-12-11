@@ -73,14 +73,14 @@ public class AI_Movement : MonoBehaviour
                     }
                 }
                 gameObject.transform.GetChild(0).gameObject.GetComponent<MeshRenderer>().material = error;
-                Debug.Log("Can't reach?");
+                //Debug.Log("Can't reach?");
                 out_of_reach = true;
             }
         }
 
         current_pos = new Vector2(transform.position.x, transform.position.y);
 
-        if (Vector2.Distance(previous_pos, current_pos) < 0.05)
+        if (Vector2.Distance(previous_pos, current_pos) < 0.02)
         {
             stuck_timer -= Time.deltaTime;
             if (stuck_timer <= 0)
@@ -163,9 +163,9 @@ public class AI_Movement : MonoBehaviour
         {
             gameObject.transform.GetChild(0).gameObject.GetComponent<MeshRenderer>().material = can_move;
             in_loop = false;
-            out_of_reach = false;
-            no_key = false;
-            inaccessible = false;
+            //out_of_reach = false;
+            //no_key = false;
+            //inaccessible = false;
         }
     }
 
