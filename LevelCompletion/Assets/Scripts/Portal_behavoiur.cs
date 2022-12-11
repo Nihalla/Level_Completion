@@ -7,6 +7,7 @@ public class Portal_behavoiur : MonoBehaviour
     private bool is_active = false;
     public GameObject linked_portal;
     private GameObject player;
+    public GameObject sled;
 
     // Start is called before the first frame update
     void Awake()
@@ -20,6 +21,7 @@ public class Portal_behavoiur : MonoBehaviour
         if(other.gameObject == player)
         {
             is_active = true;
+            sled.SetActive(!sled.activeSelf);
         }
     }
 

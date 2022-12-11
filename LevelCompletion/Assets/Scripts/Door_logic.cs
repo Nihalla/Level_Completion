@@ -11,6 +11,7 @@ public class Door_logic : MonoBehaviour
     private int keys_failed = 0;
     private Enemy_Manager enemy_manager;
     private bool gave_dest = false;
+    public bool prioritize_monster = true;
     // Start is called before the first frame update
 
     private void Awake()
@@ -21,9 +22,9 @@ public class Door_logic : MonoBehaviour
 
     private void Start()
     {
-        if (required_key.Count > 1)
+        if (required_key.Count > 1 && prioritize_monster == true)
         {
-            List<int> priority = new(); 
+            List<int> priority = new();
             foreach (GameObject key in required_key)
             {
                 if (key != null)
@@ -32,11 +33,11 @@ public class Door_logic : MonoBehaviour
                     {
                         priority.Add(required_key.IndexOf(key));
                         //required_key.Remove(key);
-                       // required_key.Insert(0, key);
+                        // required_key.Insert(0, key);
                     }
                 }
             }
-            foreach( int index in priority)
+            foreach (int index in priority)
             {
                 GameObject key_to_move = required_key[index];
                 required_key.RemoveAt(index);
@@ -65,10 +66,10 @@ public class Door_logic : MonoBehaviour
         if (!unlocked)
         {
             var key = required_key[key_to_check];
-            Debug.Log("Player hit a door , locating possible keys");
+            //Debug.Log("Player hit a door , locating possible keys");
             //foreach (GameObject key in required_key)
             //{
-                Debug.Log("Checking for key - " + key.name);
+                //Debug.Log("Checking for key - " + key.name);
                 if (!gave_dest)
                 {
                     //Debug.Log("Doesn't have a destination");
@@ -79,7 +80,7 @@ public class Door_logic : MonoBehaviour
                         {
                             if (enemy != null && enemy.GetComponent<Enemy_AI>().loot == key)
                             {
-                                Debug.Log("Key dropped by - " + enemy.name);
+                                //Debug.Log("Key dropped by - " + enemy.name);
                                 player.GetComponent<AI_Movement>().AddDestination(enemy, 0);
                                 gave_dest = true;
                                 break;
@@ -91,14 +92,14 @@ public class Door_logic : MonoBehaviour
                         //Debug.Log("Key not dropped by monster");
                         if (required_key.Count == 1)
                         {
-                            Debug.Log("unlockable by only one key");
+                            //Debug.Log("unlockable by only one key");
                             player.GetComponent<AI_Movement>().AddDestination(required_key[0], 0);
                             gave_dest = true;
                             //break;
                         }
                         else if (required_key.Count > 1)
                         {
-                            Debug.Log("unlockable by multiple keys");
+                            //Debug.Log("unlockable by multiple keys");
                             player.GetComponent<AI_Movement>().AddDestination(required_key[keys_failed], 0);
                             player.GetComponent<AI_Movement>().AddDestination(gameObject, 1);
                             gave_dest = true;
