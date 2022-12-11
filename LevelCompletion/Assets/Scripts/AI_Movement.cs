@@ -69,7 +69,9 @@ public class AI_Movement : MonoBehaviour
                         RemoveDestination(current_destination);
                         current_destination = destination_list[0];
                         Debug.Log("can't reach key, looking for alternatives");
+                        //out_of_reach = false;
                         current_destination.GetComponent<Door_logic>().KeyFailed();
+
                     }
                 }
                 gameObject.transform.GetChild(0).gameObject.GetComponent<MeshRenderer>().material = error;
@@ -80,7 +82,7 @@ public class AI_Movement : MonoBehaviour
 
         current_pos = new Vector2(transform.position.x, transform.position.y);
 
-        if (Vector2.Distance(previous_pos, current_pos) < 0.02)
+        if (Vector2.Distance(previous_pos, current_pos) < 0.03)
         {
             stuck_timer -= Time.deltaTime;
             if (stuck_timer <= 0)
@@ -163,7 +165,7 @@ public class AI_Movement : MonoBehaviour
         {
             gameObject.transform.GetChild(0).gameObject.GetComponent<MeshRenderer>().material = can_move;
             in_loop = false;
-            //out_of_reach = false;
+            out_of_reach = false;
             //no_key = false;
             //inaccessible = false;
         }

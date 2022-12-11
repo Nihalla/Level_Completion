@@ -28233,7 +28233,7 @@ PrefabInstance:
       objectReference: {fileID: 1717223277}
     - target: {fileID: 6396408427495850550, guid: e6df48c048e43a94b9de2da4843a7e83, type: 3}
       propertyPath: prioritize_monster
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 6396408427495850550, guid: e6df48c048e43a94b9de2da4843a7e83, type: 3}
       propertyPath: required_key.Array.size
