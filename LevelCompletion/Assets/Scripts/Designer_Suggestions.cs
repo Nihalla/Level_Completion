@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.InputSystem;
 
 public class Designer_Suggestions : MonoBehaviour
 {
@@ -23,7 +24,13 @@ public class Designer_Suggestions : MonoBehaviour
     private GameObject[] keys;
     [SerializeField] private GameObject unused_key;
     [SerializeField] private ISSUE current_issue = ISSUE.NONE;
-    private enum ISSUE
+    private bool selection_mode = false;
+    private Vector3 selection_XY;
+    private GameObject selected_key;
+    [SerializeField] private Camera camera_main;
+
+    PlayerControl controls;
+    public enum ISSUE
     {
         NOREACH = 0,
         LOOP = 1,
@@ -31,6 +38,11 @@ public class Designer_Suggestions : MonoBehaviour
         INACCESSIBLE = 3,
         NONE = 4,
         DEFAULT = -1
+    }
+    private void Awake()
+    {
+        controls = new PlayerControl();
+        controls.Designer.Select.performed += ctx => GetMouse();
     }
     void Start()
     {
@@ -46,6 +58,7 @@ public class Designer_Suggestions : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        
 
         player_stuck = player_script.is_stuck;
         player_looping = player_script.in_loop;
@@ -72,7 +85,7 @@ public class Designer_Suggestions : MonoBehaviour
             if (!show_suggestions)
             {
                 show_suggestions = true;
-                
+
             }
         }
         else
@@ -83,17 +96,33 @@ public class Designer_Suggestions : MonoBehaviour
 
         UI.SetActive(show_suggestions);
 
+        float closest_dist = 999f;
+        foreach (GameObject door in doors)
+        {
+
+            if (door != null)
+            {
+                //Debug.Log("Looking for closest door...");
+                if (Vector2.Distance(player.transform.position, door.transform.position) < closest_dist)
+                {
+                    closest_dist = Vector2.Distance(player.transform.position, door.transform.position);
+                    nearest_door = door;
+                }
+            }
+        }
+
+        
+
         switch (current_issue)
         {
             case ISSUE.NOREACH:
                 key_to_move = player_script.current_destination;
                 float closest_distance = 999f;
-                
+
                 foreach (GameObject tile in walkable_tiles)
                 {
                     if (tile != null)
                     {
-                        //Debug.Log("Looking for closest door...");
                         if (Vector2.Distance(key_to_move.transform.position, tile.transform.position) < closest_distance)
                         {
                             closest_distance = Vector2.Distance(key_to_move.transform.position, tile.transform.position);
@@ -106,23 +135,17 @@ public class Designer_Suggestions : MonoBehaviour
             case ISSUE.NOKEY:
 
                 List<GameObject> used_keys = new();
-                
-                float closest_dist = 999f;
+
+
                 foreach (GameObject door in doors)
                 {
 
                     if (door != null)
                     {
-                        //Debug.Log("Looking for closest door...");
-                        if (Vector2.Distance(player.transform.position, door.transform.position) < closest_dist)
+
+                        foreach (GameObject req_key in door.GetComponent<Door_logic>().required_key)
                         {
-                            closest_dist = Vector2.Distance(player.transform.position, door.transform.position);
-                            nearest_door = door;
-                        }
-                        
-                        foreach(GameObject req_key in door.GetComponent<Door_logic>().required_key)
-                        {
-                            if(req_key != null && !used_keys.Contains(req_key))
+                            if (req_key != null && !used_keys.Contains(req_key))
                             {
                                 used_keys.Add(req_key);
                             }
@@ -140,19 +163,72 @@ public class Designer_Suggestions : MonoBehaviour
                                 }
                             }
                         }
-                        
+
                     }
                 }
-               
+
                 break;
+        }
+        Debug.DrawRay(camera_main.transform.position, new Vector3(selection_XY.x, selection_XY.y, 0) - camera_main.transform.position, Color.red);
+    }
+
+    private void GetMouse()
+    {
+        Vector3 mousePos = Mouse.current.position.ReadValue();
+        Vector3 Worldpos = Camera.main.ScreenToWorldPoint(mousePos);
+        selection_XY = Worldpos;
+        if (selection_mode)
+        {
+            RaycastHit hit;
+
+            if (Physics.Raycast(camera_main.transform.position, new Vector3(selection_XY.x, selection_XY.y, 0) - camera_main.transform.position, out hit))
+            {
+                Transform objectHit = hit.transform;
+
+                if (objectHit.gameObject.tag == "Key")
+                {
+                    selected_key = objectHit.gameObject;
+                }
+                else if (selected_key != null && objectHit.gameObject.tag == "Floor_Tile")
+                {
+                    Debug.Log(selected_key + " being moved to tile - " + objectHit.gameObject);
+                    selected_key.transform.position = new Vector3(objectHit.gameObject.transform.position.x, objectHit.gameObject.transform.position.y + 1, objectHit.gameObject.transform.position.z);
+                    selected_key = null;
+                    selection_mode = false;
+                    camera_main.GetComponent<Camera>().orthographicSize = 5;
+                }
+            }
         }
     }
 
     public void AddKey()
     {
-        nearest_door.GetComponent<Door_logic>().required_key.Add(unused_key);
-        nearest_door.GetComponent<Door_logic>().ResolveDoor(0);
-        player_script.no_key = false;
+        bool in_inventory = false;
+        if (unused_key != null)
+        {
+            foreach(GameObject item in player_script.held_items)
+            {
+                if(item!=null)
+                {
+                    if(unused_key == item)
+                    {
+                        in_inventory = true;
+                    }
+                }
+            }
+            if (in_inventory)
+            {
+                nearest_door.GetComponent<Door_logic>().required_key.Add(unused_key);
+                nearest_door.GetComponent<Door_logic>().CheckIfNeededKeyInInventory();
+                player_script.no_key = false;
+            }
+            else
+            {
+                nearest_door.GetComponent<Door_logic>().required_key.Add(unused_key);
+                nearest_door.GetComponent<Door_logic>().ResolveDoor(0);
+                player_script.no_key = false;
+            }
+        }
     }
 
     public void Move()
@@ -160,8 +236,61 @@ public class Designer_Suggestions : MonoBehaviour
         Debug.Log("Trying to move key");
         if(nearest_tile != null)
         {
-            Debug.Log(key_to_move + " being moved to tile - " + nearest_tile);
-            key_to_move.transform.position = new Vector3(nearest_tile.transform.position.x, nearest_tile.transform.position.y +1, nearest_tile.transform.position.z);
+            Debug.Log(key_to_move.name + " being moved to tile - " + nearest_tile.name);
+            key_to_move.transform.position = new Vector3(nearest_tile.transform.position.x, nearest_tile.transform.position.y + 0.5f, nearest_tile.transform.position.z);
         }
+    }
+
+    public void Remove()
+    {
+        Debug.Log("Removing door...");
+        {
+            if(!player_looping)
+            {
+                Destroy(nearest_door);
+            }
+            else
+            {
+                Destroy(nearest_door);
+            }
+        }
+    }
+
+    public void Relocate()
+    {
+        selection_mode = !selection_mode;
+        if(selection_mode)
+        {
+            camera_main.GetComponent<Camera>().orthographicSize = 8;
+            Debug.Log("Select a key to move");
+        }
+        else
+        {
+            camera_main.GetComponent<Camera>().orthographicSize = 5;
+            Debug.Log("Exited selection");
+            selected_key = null;
+        }
+    }
+
+    public ISSUE GetGiveIssue()
+    {
+        return current_issue;
+    }
+
+    private void OnEnable()
+    {
+        controls.Designer.Enable();
+    }
+    public void EnableInput()
+    {
+        controls.Designer.Enable();
+    }
+    private void OnDisable()
+    {
+        controls.Designer.Disable();
+    }
+    public void DisableInput()
+    {
+        controls.Designer.Disable();
     }
 }

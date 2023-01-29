@@ -134,6 +134,34 @@ public partial class @PlayerControl : IInputActionCollection2, IDisposable
                     ""isPartOfComposite"": false
                 }
             ]
+        },
+        {
+            ""name"": ""Designer"",
+            ""id"": ""35e14df9-e5b4-466c-89be-856960b1c34a"",
+            ""actions"": [
+                {
+                    ""name"": ""Select"",
+                    ""type"": ""Button"",
+                    ""id"": ""b4978bd0-e2b2-4be1-ad4a-c1a5461e05c7"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                }
+            ],
+            ""bindings"": [
+                {
+                    ""name"": """",
+                    ""id"": ""9b7eb39f-2abb-47a2-9848-70ebcc0e8381"",
+                    ""path"": ""<Mouse>/leftButton"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Select"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                }
+            ]
         }
     ],
     ""controlSchemes"": []
@@ -143,6 +171,9 @@ public partial class @PlayerControl : IInputActionCollection2, IDisposable
         m_Player_Move = m_Player.FindAction("Move", throwIfNotFound: true);
         m_Player_Interact = m_Player.FindAction("Interact", throwIfNotFound: true);
         m_Player_Jump = m_Player.FindAction("Jump", throwIfNotFound: true);
+        // Designer
+        m_Designer = asset.FindActionMap("Designer", throwIfNotFound: true);
+        m_Designer_Select = m_Designer.FindAction("Select", throwIfNotFound: true);
     }
 
     public void Dispose()
@@ -247,10 +278,47 @@ public partial class @PlayerControl : IInputActionCollection2, IDisposable
         }
     }
     public PlayerActions @Player => new PlayerActions(this);
+
+    // Designer
+    private readonly InputActionMap m_Designer;
+    private IDesignerActions m_DesignerActionsCallbackInterface;
+    private readonly InputAction m_Designer_Select;
+    public struct DesignerActions
+    {
+        private @PlayerControl m_Wrapper;
+        public DesignerActions(@PlayerControl wrapper) { m_Wrapper = wrapper; }
+        public InputAction @Select => m_Wrapper.m_Designer_Select;
+        public InputActionMap Get() { return m_Wrapper.m_Designer; }
+        public void Enable() { Get().Enable(); }
+        public void Disable() { Get().Disable(); }
+        public bool enabled => Get().enabled;
+        public static implicit operator InputActionMap(DesignerActions set) { return set.Get(); }
+        public void SetCallbacks(IDesignerActions instance)
+        {
+            if (m_Wrapper.m_DesignerActionsCallbackInterface != null)
+            {
+                @Select.started -= m_Wrapper.m_DesignerActionsCallbackInterface.OnSelect;
+                @Select.performed -= m_Wrapper.m_DesignerActionsCallbackInterface.OnSelect;
+                @Select.canceled -= m_Wrapper.m_DesignerActionsCallbackInterface.OnSelect;
+            }
+            m_Wrapper.m_DesignerActionsCallbackInterface = instance;
+            if (instance != null)
+            {
+                @Select.started += instance.OnSelect;
+                @Select.performed += instance.OnSelect;
+                @Select.canceled += instance.OnSelect;
+            }
+        }
+    }
+    public DesignerActions @Designer => new DesignerActions(this);
     public interface IPlayerActions
     {
         void OnMove(InputAction.CallbackContext context);
         void OnInteract(InputAction.CallbackContext context);
         void OnJump(InputAction.CallbackContext context);
+    }
+    public interface IDesignerActions
+    {
+        void OnSelect(InputAction.CallbackContext context);
     }
 }

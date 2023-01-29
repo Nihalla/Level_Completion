@@ -92,7 +92,10 @@ public class AI_Movement : MonoBehaviour
                     if (destination_list[1].tag == "Door" && !no_key)
                     {
                         RemoveDestination(current_destination);
-                        destination_list[0].GetComponent<Door_logic>().KeyFailed();
+                        if (destination_list[0].tag == "Door")
+                        {
+                            destination_list[0].GetComponent<Door_logic>().KeyFailed();
+                        }
                         stuck_timer = 2f;
                     }
                     else if (destination_list[0] == destination_list[1] && !no_key && !inaccessible)
@@ -188,6 +191,12 @@ public class AI_Movement : MonoBehaviour
             destination_list.Remove(to_remove);
         }
     }
+
+    public void RemoveDestination(int dest_index)
+    {
+        destination_list.RemoveAt(dest_index);
+    }
+
     public void Hold(GameObject key)
     {
         held_items.Add(key);

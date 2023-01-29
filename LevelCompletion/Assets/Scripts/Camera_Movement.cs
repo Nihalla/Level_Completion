@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class Camera : MonoBehaviour
+public class Camera_Movement : MonoBehaviour
 {
     public GameObject look_at;
     private float offset = 2f;

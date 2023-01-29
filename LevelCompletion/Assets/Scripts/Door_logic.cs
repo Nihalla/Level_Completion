@@ -46,6 +46,17 @@ public class Door_logic : MonoBehaviour
         }
     }
 
+    private void FixedUpdate()
+    {
+        foreach(GameObject key in required_key)
+        {
+            if (key == null)
+            {
+                required_key.Remove(key);
+            }
+        }
+    }
+
     public bool CheckKey(GameObject key)
     {
         foreach (GameObject k in required_key)
@@ -64,13 +75,20 @@ public class Door_logic : MonoBehaviour
     {
         
         if (!unlocked)
-        {
+        {   
+            if (key_to_check >= required_key.Count)
+            {
+                key_to_check = required_key.Count-1;
+                keys_failed = required_key.Count-1;
+            }
             var key = required_key[key_to_check];
             //Debug.Log("Player hit a door , locating possible keys");
             //foreach (GameObject key in required_key)
             //{
                 //Debug.Log("Checking for key - " + key.name);
                 if (!gave_dest)
+                {
+                if (key != null)
                 {
                     //Debug.Log("Doesn't have a destination");
                     if (key.GetComponent<Key_behaviour>().monster_drop)
@@ -106,6 +124,7 @@ public class Door_logic : MonoBehaviour
                             //break;
                         }
                     }
+                }
                // }
             }
 
@@ -135,30 +154,35 @@ public class Door_logic : MonoBehaviour
                         }
                     }
                 }
-                foreach (GameObject item in player.GetComponent<AI_Movement>().held_items)
-                {
-                    if (item != null)
-                    {
-                        if (CheckKey(item))
-                        {
-                            player.GetComponent<AI_Movement>().held_items.Remove(item);
-                            Destroy(item);
-                            unlocked = true;
-                            if (player.GetComponent<AI_Movement>().current_destination == gameObject)
-                            {
-                                player.GetComponent<AI_Movement>().RemoveDestination(gameObject);
-                            }
-                            Destroy(gameObject);
-                            break;
-                        }
-                    }
-                }
+                CheckIfNeededKeyInInventory();
                 ResolveDoor(keys_failed);
             }
             else
             {
                 Debug.Log("Door has no valid key");
                 player.GetComponent<AI_Movement>().no_key = true;
+            }
+        }
+    }
+
+    public void CheckIfNeededKeyInInventory()
+    {
+        foreach (GameObject item in player.GetComponent<AI_Movement>().held_items)
+        {
+            if (item != null)
+            {
+                if (CheckKey(item))
+                {
+                    player.GetComponent<AI_Movement>().held_items.Remove(item);
+                    Destroy(item);
+                    unlocked = true;
+                    if (player.GetComponent<AI_Movement>().current_destination == gameObject)
+                    {
+                        player.GetComponent<AI_Movement>().RemoveDestination(gameObject);
+                    }
+                    Destroy(gameObject);
+                    break;
+                }
             }
         }
     }
@@ -177,5 +201,10 @@ public class Door_logic : MonoBehaviour
         keys_failed++;
         gave_dest = false;
         ResolveDoor(keys_failed);
+    }
+
+    public void ResetKeys()
+    {
+        keys_failed = 0;
     }
 }

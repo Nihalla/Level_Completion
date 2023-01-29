@@ -6,24 +6,31 @@ using TMPro;
 
 public class Text_Script : MonoBehaviour
 {
-    private bool stuck = false;
-    // Start is called before the first frame update
-    void Start()
-    {
-        stuck = GameObject.FindGameObjectWithTag("Player").GetComponent<AI_Movement>().is_stuck;   
-    }
+    [SerializeField] private Designer_Suggestions issues;
 
-    // Update is called once per frame
     void FixedUpdate()
     {
-        stuck = GameObject.FindGameObjectWithTag("Player").GetComponent<AI_Movement>().is_stuck;
-        if (stuck)
+        switch (issues.GetGiveIssue())
         {
-            GetComponent<TMP_Text>().text = "Stuck";
+            case Designer_Suggestions.ISSUE.NOREACH:
+                GetComponent<TMP_Text>().text = "Key out of bounds";
+                break;
+            case Designer_Suggestions.ISSUE.NOKEY:
+                GetComponent<TMP_Text>().text = "No key attached to the door";
+                break;
+            case Designer_Suggestions.ISSUE.LOOP:
+                GetComponent<TMP_Text>().text = "Stuck in a loop";
+                break;
+            case Designer_Suggestions.ISSUE.INACCESSIBLE:
+                GetComponent<TMP_Text>().text = "Key behind something and can not be reached";
+                break;
+            case Designer_Suggestions.ISSUE.DEFAULT:
+                GetComponent<TMP_Text>().text = "Unknown issue";
+                break;
+            case Designer_Suggestions.ISSUE.NONE:
+                GetComponent<TMP_Text>().text = "Moving";
+                break;
         }
-        else
-        {
-            GetComponent<TMP_Text>().text = "Moving";
-        }
+
     }
 }
