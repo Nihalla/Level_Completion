@@ -21,6 +21,7 @@ public class AI_Movement : MonoBehaviour
     private Vector2 current_pos;
     [SerializeField] private Material error;
     [SerializeField] private Material can_move;
+    private bool start_movement = false;
 
     private void Awake()
     {
@@ -35,142 +36,130 @@ public class AI_Movement : MonoBehaviour
     // Update is called once per frame
     void FixedUpdate()
     {
-        NavMeshPath path = new NavMeshPath();
-        
-        foreach (GameObject dest in destination_list)
+        if (start_movement)
         {
-            if (dest == null)
-            {
-                RemoveDestination(dest);
-            }
-        }
+            NavMeshPath path = new NavMeshPath();
 
-        current_destination = destination_list[0];
-            
-        if (current_destination.tag == "Door")
-        {
-            agent.SetDestination(destination_list[0].transform.position);
-        }
-        else
-        {
-            if (agent.CalculatePath(destination_list[0].transform.position, path) && path.status == NavMeshPathStatus.PathComplete)
+            foreach (GameObject dest in destination_list)
             {
-                gameObject.transform.GetChild(0).gameObject.GetComponent<MeshRenderer>().material = can_move;
-                //Debug.Log("Can reach");
+                if (dest == null)
+                {
+                    RemoveDestination(dest);
+                }
+            }
+
+            current_destination = destination_list[0];
+
+            if (current_destination.tag == "Door")
+            {
                 agent.SetDestination(destination_list[0].transform.position);
             }
             else
             {
-                if(current_destination != final_destination)
+                if (agent.CalculatePath(destination_list[0].transform.position, path) && path.status == NavMeshPathStatus.PathComplete)
                 {
-                    
-                    if (destination_list[1].tag == "Door")
-                    {
-                        RemoveDestination(current_destination);
-                        current_destination = destination_list[0];
-                        Debug.Log("can't reach key, looking for alternatives");
-                        //out_of_reach = false;
-                        current_destination.GetComponent<Door_logic>().KeyFailed();
-
-                    }
-                }
-                gameObject.transform.GetChild(0).gameObject.GetComponent<MeshRenderer>().material = error;
-                //Debug.Log("Can't reach?");
-                out_of_reach = true;
-            }
-        }
-
-        current_pos = new Vector2(transform.position.x, transform.position.y);
-
-        if (Vector2.Distance(previous_pos, current_pos) < 0.03)
-        {
-            stuck_timer -= Time.deltaTime;
-            if (stuck_timer <= 0)
-            {
-                if (current_destination != final_destination)
-                {
-                    if (destination_list[1].tag == "Door" && !no_key)
-                    {
-                        RemoveDestination(current_destination);
-                        if (destination_list[0].tag == "Door")
-                        {
-                            destination_list[0].GetComponent<Door_logic>().KeyFailed();
-                        }
-                        stuck_timer = 2f;
-                    }
-                    else if (destination_list[0] == destination_list[1] && !no_key && !inaccessible)
-                    {
-                        RemoveDestination(current_destination);
-                        current_destination = destination_list[0];
-                        RemoveDestination(current_destination);
-                        if (destination_list[0].tag == "Door")
-                        {
-                            destination_list[0].GetComponent<Door_logic>().KeyFailed();
-                            stuck_timer = 2f;
-                        }
-                    }
-                    else
-                    { is_stuck = true; }
+                    gameObject.transform.GetChild(0).gameObject.GetComponent<MeshRenderer>().material = can_move;
+                    //Debug.Log("Can reach");
+                    agent.SetDestination(destination_list[0].transform.position);
                 }
                 else
                 {
-                    is_stuck = true;
+                    if (current_destination != final_destination)
+                    {
+
+                        if (destination_list[1].tag == "Door")
+                        {
+                            RemoveDestination(current_destination);
+                            current_destination = destination_list[0];
+                            Debug.Log("can't reach key, looking for alternatives");
+                            //out_of_reach = false;
+                            current_destination.GetComponent<Door_logic>().KeyFailed();
+
+                        }
+                    }
+                    gameObject.transform.GetChild(0).gameObject.GetComponent<MeshRenderer>().material = error;
+                    //Debug.Log("Can't reach?");
+                    out_of_reach = true;
                 }
             }
-        }
-        else
-        {
-            stuck_timer = 2f;
-            is_stuck = false;
-        }
 
-        previous_pos = current_pos;
+            current_pos = new Vector2(transform.position.x, transform.position.y);
 
-        int list_pos = 0;
-        foreach(GameObject destination in destination_list)
-        {
-            if (destination == current_destination)
+            if (Vector2.Distance(previous_pos, current_pos) < 0.03)
             {
-                list_pos++;
-                if (list_pos > 1 && !inaccessible)
+                stuck_timer -= Time.deltaTime;
+                if (stuck_timer <= 0)
                 {
-                    //Debug.Log("Hi I am destination - " + destination.name + " and I am already on the list!");
-                    is_stuck = true;
-                    in_loop = true;
+                    if (current_destination != final_destination)
+                    {
+                        if (destination_list[1].tag == "Door" && !no_key)
+                        {
+                            RemoveDestination(current_destination);
+                            if (destination_list[0].tag == "Door")
+                            {
+                                destination_list[0].GetComponent<Door_logic>().KeyFailed();
+                            }
+                            stuck_timer = 2f;
+                        }
+                        else if (destination_list[0] == destination_list[1] && !no_key && !inaccessible)
+                        {
+                            RemoveDestination(current_destination);
+                            current_destination = destination_list[0];
+                            RemoveDestination(current_destination);
+                            if (destination_list[0].tag == "Door")
+                            {
+                                destination_list[0].GetComponent<Door_logic>().KeyFailed();
+                                stuck_timer = 2f;
+                            }
+                        }
+                        else
+                        { is_stuck = true; }
+                    }
+                    else
+                    {
+                        is_stuck = true;
+                    }
                 }
             }
-            /*if (destination_list.IndexOf(destination) != 0)
+            else
             {
-                //Debug.Log(destination.name + " " + destination_list.IndexOf(destination));
+                stuck_timer = 2f;
+                is_stuck = false;
             }
-            //Debug.Log("Current dest " + current_destination.name);
-            if (current_destination.name == destination.name && destination_list.IndexOf(destination) != 0)
-            {
-                Debug.Log("Hi I am destination - " + destination.name + " and I am already on the list with this index - " + destination_list.IndexOf(destination));
-                
-            }
-            if (current_destination == destination && destination != destination_list[0])
-            {
-                //Debug.Log("Hi I am destination - " + destination.name + " and I am already on the list with this index - " + destination_list.IndexOf(destination));
-                is_stuck = true;
-            }*/
-        }
-        if (list_pos < 1)
-        {
-            is_stuck = false;
-        }
 
-        if (is_stuck)
-        {
-            gameObject.transform.GetChild(0).gameObject.GetComponent<MeshRenderer>().material = error;
-        }
-        else
-        {
-            gameObject.transform.GetChild(0).gameObject.GetComponent<MeshRenderer>().material = can_move;
-            in_loop = false;
-            out_of_reach = false;
-            //no_key = false;
-            //inaccessible = false;
+            previous_pos = current_pos;
+
+            int list_pos = 0;
+            foreach (GameObject destination in destination_list)
+            {
+                if (destination == current_destination)
+                {
+                    list_pos++;
+                    if (list_pos > 1 && !inaccessible)
+                    {
+                        //Debug.Log("Hi I am destination - " + destination.name + " and I am already on the list!");
+                        is_stuck = true;
+                        in_loop = true;
+                    }
+                }
+            }
+            if (list_pos < 1)
+            {
+                is_stuck = false;
+            }
+
+            if (is_stuck)
+            {
+                gameObject.transform.GetChild(0).gameObject.GetComponent<MeshRenderer>().material = error;
+            }
+            else
+            {
+                gameObject.transform.GetChild(0).gameObject.GetComponent<MeshRenderer>().material = can_move;
+                in_loop = false;
+                out_of_reach = false;
+                //no_key = false;
+                //inaccessible = false;
+            }
         }
     }
 
@@ -200,5 +189,10 @@ public class AI_Movement : MonoBehaviour
     public void Hold(GameObject key)
     {
         held_items.Add(key);
+    }
+
+    public void StartMoving()
+    {
+        start_movement = true;
     }
 }
